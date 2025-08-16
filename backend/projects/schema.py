@@ -165,7 +165,15 @@ class CreateTask(graphene.Mutation):
 
     def mutate(self, info, project_id, title, status="TODO", description="", assignee_email="", due_date=None):
         org = info.context.organization
-        project = _assert_project_belongs_to_org(project_id, org)
+        try:
+            _type, local_db_id = from_global_id(project_id)
+            if _type != 'ProjectType': # Optional: Add a type check for extra safety
+                raise GraphQLError("Invalid ID type provided for project.")
+        except Exception:
+            raise GraphQLError("Invalid project ID format.")
+        
+        # 2. Use the decoded local_db_id in your helper function.
+        project = _assert_project_belongs_to_org(local_db_id, org)
         task = Task.objects.create(
             project=project,
             title=title,
