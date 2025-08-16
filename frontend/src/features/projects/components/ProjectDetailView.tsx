@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useProjectStore } from "../stores/projectStore";
 import { useTaskStore } from "../stores/taskStore";
 import {
@@ -20,11 +20,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { CreateTaskDialog } from "./CreateTaskDialog";
 import type { Project } from "../types/projectTypes";
 
 export function ProjectDetailView() {
     const { projects, selectedProjectId, selectProject, updateProjectStatus } = useProjectStore();
     const { fetchTasks, clearTasks } = useTaskStore();
+    const [isCreateTaskOpen, setCreateTaskOpen] = useState(false);
 
     const selectedProject = projects.find(p => p.id === selectedProjectId);
 
@@ -46,45 +48,53 @@ export function ProjectDetailView() {
     };
 
     return (
-        <Card className="sticky top-6">
-            <CardHeader className="flex-row items-start justify-between">
-                <div>
-                    <CardTitle className="text-2xl">{selectedProject.name}</CardTitle>
-                    <CardDescription>{selectedProject.description || "No description provided."}</CardDescription>
-                </div>
+        <>
+            <Card className="sticky top-6">
+                <CardHeader className="flex-row items-start justify-between">
+                    <div>
+                        <CardTitle className="text-2xl">{selectedProject.name}</CardTitle>
+                        <CardDescription>{selectedProject.description || "No description provided."}</CardDescription>
+                    </div>
 
-                <CardAction>
-                    <Button variant="outline" size="icon" onClick={() => selectProject(null)}>
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">Close</span>
+                    <CardAction>
+                        <Button variant="outline" size="icon" onClick={() => selectProject(null)}>
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Close</span>
+                        </Button>
+                    </CardAction>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="flex items-center gap-4">
+                        <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
+                        <Select value={selectedProject.status} onValueChange={handleStatusChange}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ACTIVE">Active</SelectItem>
+                                <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                                <SelectItem value="COMPLETED">Completed</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <h3 className="mb-4 text-lg font-semibold">Tasks</h3>
+                        <TaskList />
+                    </div>
+                </CardContent>
+                <CardFooter className="border-t pt-6">
+                    <Button className="w-full" onClick={() => setCreateTaskOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create New Task
                     </Button>
-                </CardAction>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="flex items-center gap-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
-                    <Select value={selectedProject.status} onValueChange={handleStatusChange}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ACTIVE">Active</SelectItem>
-                            <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                            <SelectItem value="COMPLETED">Completed</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div>
-                    <h3 className="mb-4 text-lg font-semibold">Tasks</h3>
-                    <TaskList />
-                </div>
-            </CardContent>
-            <CardFooter className="border-t pt-6">
-                <Button className="w-full">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create New Task
-                </Button>
-            </CardFooter>
-        </Card>
+                </CardFooter>
+            </Card>
+
+            <CreateTaskDialog
+                projectId={selectedProject.id}
+                open={isCreateTaskOpen}
+                onOpenChange={setCreateTaskOpen}
+            />
+        </>
     );
 }
