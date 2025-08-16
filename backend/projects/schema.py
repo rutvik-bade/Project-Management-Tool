@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from django.db.models import Count, Q
 from graphql import GraphQLError
+from graphql_relay import from_global_id 
 
 from projects.models import Project, Task, TaskComment
 
@@ -55,6 +56,7 @@ class ProjectQuery(graphene.ObjectType):
         status=graphene.String(required=False), 
         search=graphene.String(required=False)
     )
+    tasks = graphene.List(TaskType, project_id=graphene.ID(required=True))
 
     def resolve_projects(self, info, status=None, search=None):
         org = info.context.organization
@@ -75,6 +77,20 @@ class ProjectQuery(graphene.ObjectType):
             qs = qs.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
         return qs
+
+    def resolve_tasks(self, info, project_id):
+        org = info.context.organization
+        try:
+            # from_global_id returns a tuple: ('ProjectType', '3')
+            _type, local_db_id = from_global_id(project_id)
+        except Exception:
+            raise GraphQLError("Invalid project ID format.")
+
+        try:
+            project = Project.objects.get(id=local_db_id, organization=org)
+            return Task.objects.filter(project=project).order_by("created_at")
+        except Project.DoesNotExist:
+            raise GraphQLError("Project not found in this organization.")
 
 # -------------------- Mutations --------------------
 
