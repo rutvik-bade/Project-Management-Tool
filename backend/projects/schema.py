@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from django.db.models import Count, Q
 from graphql import GraphQLError
+from graphql_relay import from_global_id 
 
 from projects.models import Project, Task, TaskComment
 
@@ -55,6 +56,7 @@ class ProjectQuery(graphene.ObjectType):
         status=graphene.String(required=False), 
         search=graphene.String(required=False)
     )
+    tasks = graphene.List(TaskType, project_id=graphene.ID(required=True))
 
     def resolve_projects(self, info, status=None, search=None):
         org = info.context.organization
@@ -75,6 +77,20 @@ class ProjectQuery(graphene.ObjectType):
             qs = qs.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
         return qs
+
+    def resolve_tasks(self, info, project_id):
+        org = info.context.organization
+        try:
+            # from_global_id returns a tuple: ('ProjectType', '3')
+            _type, local_db_id = from_global_id(project_id)
+        except Exception:
+            raise GraphQLError("Invalid project ID format.")
+
+        try:
+            project = Project.objects.get(id=local_db_id, organization=org)
+            return Task.objects.filter(project=project).order_by("created_at")
+        except Project.DoesNotExist:
+            raise GraphQLError("Project not found in this organization.")
 
 # -------------------- Mutations --------------------
 
@@ -125,10 +141,16 @@ class UpdateProject(graphene.Mutation):
     def mutate(self, info, id, **kwargs):
         org = info.context.organization
         try:
-            project = Project.objects.get(id=id, organization=org)
+            _type, local_db_id = from_global_id(id)
+        except Exception:
+            raise GraphQLError("Invalid Project ID format.")
+
+        # 2. Use the decoded local_db_id for your database query.
+        try:
+            project = Project.objects.get(id=local_db_id, organization=org)
         except Project.DoesNotExist:
             raise GraphQLError("Project not found in this organization.")
-
+            
         for field, value in kwargs.items():
             if value is not None:
                 setattr(project, field, value)
@@ -149,7 +171,15 @@ class CreateTask(graphene.Mutation):
 
     def mutate(self, info, project_id, title, status="TODO", description="", assignee_email="", due_date=None):
         org = info.context.organization
-        project = _assert_project_belongs_to_org(project_id, org)
+        try:
+            _type, local_db_id = from_global_id(project_id)
+            if _type != 'ProjectType': # Optional: Add a type check for extra safety
+                raise GraphQLError("Invalid ID type provided for project.")
+        except Exception:
+            raise GraphQLError("Invalid project ID format.")
+        
+        # 2. Use the decoded local_db_id in your helper function.
+        project = _assert_project_belongs_to_org(local_db_id, org)
         task = Task.objects.create(
             project=project,
             title=title,
