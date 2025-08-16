@@ -141,10 +141,16 @@ class UpdateProject(graphene.Mutation):
     def mutate(self, info, id, **kwargs):
         org = info.context.organization
         try:
-            project = Project.objects.get(id=id, organization=org)
+            _type, local_db_id = from_global_id(id)
+        except Exception:
+            raise GraphQLError("Invalid Project ID format.")
+
+        # 2. Use the decoded local_db_id for your database query.
+        try:
+            project = Project.objects.get(id=local_db_id, organization=org)
         except Project.DoesNotExist:
             raise GraphQLError("Project not found in this organization.")
-
+            
         for field, value in kwargs.items():
             if value is not None:
                 setattr(project, field, value)
