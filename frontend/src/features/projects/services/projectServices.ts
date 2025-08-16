@@ -39,3 +39,15 @@ export const CREATE_PROJECT = gql`
     }
   }
 `;
+
+
+export const UPDATE_PROJECT_STATUS = gql`
+  mutation UpdateProjectStatus($id: ID!, $status: String!) {
+    updateProject(id: $id, status: $status) {
+      project {
+        id
+        status
+      }
+    }
+  }
+`;

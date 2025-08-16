@@ -63,7 +63,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <div className="flex flex-1 flex-col overflow-y-auto">
                 <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-background px-4 md:justify-end md:px-6">
                     <Button
-                        variant="ghost" // Changed for better visibility
+                        variant="outline" // Changed for better visibility
                         size="icon"
                         className="md:hidden"
                         onClick={() => setSidebarOpen(true)}

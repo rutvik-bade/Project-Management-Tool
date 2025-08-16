@@ -2,6 +2,8 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { ProgressCircle } from "@/components/ui/progressCircle";
 import { ProjectStatusBadge } from "@/components/ui/projectStatusBadge";
 import type { Project } from "../types/projectTypes";
+import { useProjectStore } from "../stores/projectStore";
+import { cn } from "@/lib/utils";
 
 // Helper to format date
 const formatDate = (dateString: string | null) => {
@@ -18,11 +20,20 @@ interface ProjectTableRowProps {
 }
 
 export function ProjectTableRow({ project }: ProjectTableRowProps) {
+
+  const { selectProject, selectedProjectId } = useProjectStore();
+  const isSelected = project.id === selectedProjectId;
+
   const totalTasks = project.taskCount;
   const progress = totalTasks > 0 ? project.completedTasks / totalTasks : 0;
 
   return (
-    <TableRow>
+    <TableRow key={project.id}
+      onClick={() => selectProject(project.id)}
+      className={cn(
+        "cursor-pointer",
+        isSelected && "bg-accent"
+      )}>
       <TableCell>
         <div className="flex items-center gap-3">
           <ProgressCircle progress={progress} />

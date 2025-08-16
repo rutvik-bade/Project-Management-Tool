@@ -1,5 +1,6 @@
+// src/features/projects/components/CreateProjectDialog.tsx
+
 import { useState } from "react";
-import { useMutation } from "@apollo/client";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { CREATE_PROJECT, GET_PROJECTS } from "../services/projectServices";
+import { useProjectStore } from "../stores/projectStore";
 
 const initialFormState = {
     name: "",
@@ -33,16 +34,7 @@ const initialFormState = {
 export function CreateProjectDialog() {
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState(initialFormState);
-
-    const [createProject, { loading, error }] = useMutation(CREATE_PROJECT, {
-        // This is the key to automatically updating the list after a successful creation.
-        // It tells Apollo Client to re-run the GET_PROJECTS query.
-        refetchQueries: [{ query: GET_PROJECTS }],
-        onCompleted: () => {
-            setOpen(false); // Close the dialog on success
-            setFormData(initialFormState); // Reset the form
-        },
-    });
+    const { createProject, isCreating, createError } = useProjectStore();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
@@ -56,17 +48,15 @@ export function CreateProjectDialog() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name || !formData.status) {
-            // Simple validation
             alert("Project Name and Status are required.");
             return;
         }
 
-        await createProject({
-            variables: {
-                ...formData,
-                dueDate: formData.dueDate || null, // Send null if date is empty
-            },
-        });
+        const success = await createProject(formData);
+        if (success) {
+            setOpen(false);
+            setFormData(initialFormState);
+        }
     };
 
     return (
@@ -142,14 +132,14 @@ export function CreateProjectDialog() {
                         </div>
                     </div>
                 </form>
-                {error && <p className="text-sm text-destructive">Error: {error.message}</p>}
+                {createError && <p className="text-sm text-destructive">Error: {createError}</p>}
                 <DialogFooter>
                     <Button
                         type="submit"
                         form="create-project-form"
-                        disabled={loading}
+                        disabled={isCreating}
                     >
-                        {loading ? "Creating..." : "Create Project"}
+                        {isCreating ? "Creating..." : "Create Project"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
