@@ -14,7 +14,7 @@ export default function App() {
         </Link>
         <nav>
           <Button asChild variant="outline">
-            <a href="https://github.com/shadcn" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/rutvik-bade/Project-Management-Tool" target="_blank" rel="noopener noreferrer">
               View on GitHub
             </a>
           </Button>

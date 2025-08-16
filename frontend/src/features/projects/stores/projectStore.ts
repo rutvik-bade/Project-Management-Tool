@@ -5,7 +5,7 @@ import client from '@/lib/apolloClient';
 import { GET_PROJECTS, CREATE_PROJECT, UPDATE_PROJECT_STATUS } from '../services/projectServices';
 import type { ProjectActions, ProjectState } from '../types/projectTypes';
 
-export const useProjectStore = create<ProjectState & ProjectActions>((set, get) => ({
+export const useProjectStore = create<ProjectState & ProjectActions>((set) => ({
     projects: [],
     selectedProjectId: null,
     loading: false,
