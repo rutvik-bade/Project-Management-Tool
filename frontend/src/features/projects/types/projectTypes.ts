@@ -27,4 +27,5 @@ export type ProjectActions = {
     }) => Promise<boolean>; // Return true on success, false on failure
     selectProject: (projectId: number | null) => void;
     updateProjectStatus: (projectId: number, status: Project['status']) => Promise<void>;
+    incrementTaskCount: (projectId: number) => void;
 };

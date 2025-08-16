@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import client from '@/lib/apolloClient';
 import { GET_TASKS_BY_PROJECT, CREATE_TASK } from '../services/taskServices';
 import type { TaskActions, TaskState } from '../types/taskTypes';
-
+import { useProjectStore } from './projectStore';
 
 export const useTaskStore = create<TaskState & TaskActions>((set) => ({
     tasks: [],
@@ -42,6 +42,8 @@ export const useTaskStore = create<TaskState & TaskActions>((set) => ({
                 tasks: [...state.tasks, newTask],
                 isCreating: false,
             }));
+            useProjectStore.getState().incrementTaskCount(newTaskData.projectId);
+
 
             return true; // Success
         } catch (err: any) {

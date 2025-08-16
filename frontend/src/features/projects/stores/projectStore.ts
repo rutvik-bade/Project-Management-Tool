@@ -74,4 +74,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>((set) => ({
             // Optionally set an error state here
         }
     },
+    incrementTaskCount: (projectId) => {
+        set((state) => ({
+            projects: state.projects.map((p) =>
+                p.id === projectId
+                    ? { ...p, taskCount: p.taskCount + 1 }
+                    : p
+            ),
+        }));
+    },
 }));
